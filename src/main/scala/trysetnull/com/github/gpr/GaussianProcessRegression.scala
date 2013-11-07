@@ -107,10 +107,10 @@ class GaussianProcessRegression private (
     }
     
     for {
-      // v := L\k_*
-      v <- allCatch opt l_solver.solve(k_*)
-      // mean := k_*' * alpha
-      mean = k_*.transpose().operate(alpha).map(f_mean)
+      // v := L\k_*'
+      v <- allCatch opt l_solver.solve(k_*.transpose())
+      // mean := k_* * alpha
+      mean = k_*.operate(alpha).map(f_mean)
       // V|f_*| := k(x_*, x_*) - v'v
       covariance = k_**.subtract(v.transpose().multiply(v))
     } yield (mean, covariance)
@@ -127,9 +127,9 @@ class GaussianProcessRegression private (
   /** Generates the K_* matrix from a sequence of inputs x_* and a kernel function k.
    * The training points are used implicitly. */
   private def generateK_*(x_* : Seq[Double], k: (Double, Double) => Double): RealMatrix = {    
-    val k_* = MatrixUtils.createRealMatrix(xy.length, x_*.length)
+    val k_* = MatrixUtils.createRealMatrix(x_*.length, xy.length)
     for (p <- 0 until k_*.getRowDimension; q <- 0 until k_*.getColumnDimension) {
-      val cov = k(x_*(q), xy(p)._1)
+      val cov = k(x_*(p), xy(q)._1)
       k_*.setEntry(p, q, cov)
     }
     k_*

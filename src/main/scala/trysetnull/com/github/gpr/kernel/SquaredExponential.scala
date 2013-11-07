@@ -28,7 +28,7 @@ import org.apache.commons.math3.util.{FastMath, Precision}
  */
 class SquaredExponential(sigma_f: Double, sigma_n: Double, l: Double) extends KernelBase {
   // DerivativeStructure
-  // kernel function has two free parmeters: k(x, x)
+  // kernel function k has two free parmeters: k(x_p, x_q)
   // We want to make first-order derivative predictions which require us to be
   // able to differentiate the kernel to second order.
   val params = 2

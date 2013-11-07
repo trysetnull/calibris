@@ -25,7 +25,7 @@ import org.apache.commons.math3.util.FastMath
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
-import scala.concurrent.{future, blocking, Future, Await}
+import scala.concurrent.{future, blocking, Future, Promise, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
 
@@ -68,24 +68,26 @@ class Swarm(swarmSize: Int, bounds: Seq[(Double, Double)], enforce: Boolean, var
   }
 
   // TODO: A recursive method with an accumulator, mutable list or stream.
-  //@tailrec
   private def swarm(currentParticles: Future[List[(Seq[Double], Double)]]): Unit = {
-    currentParticles onSuccess {
-      case x => if (finished(x.flatMap(_._1).min)) return
+    
+    def getGlobalMinimum(particles: List[(Seq[Double], Double)]): (Seq[Double], Double) = {
+      val tuple = particles.reduce((acc, next) => if (acc._2 < next._2) acc else next)
+      log.info(tuple._2+":\t"+tuple._1)
+      tuple
     }
     
-    val nextIteration = currentParticles flatMap {
-      particles: List[(Seq[Double], Double)] => 
-      {
-	val (minimum, score) = particles.reduce((acc, next) => if (acc._2 < next._2) acc else next)
-	log.info(score+":\t"+minimum)
-	Future.traverse(particles)(p => updatePosition(p, minimum))
-      }
+    val futureParticles = {
+      for {
+	particles: List[(Seq[Double], Double)] <- currentParticles
+	(minimum, score) = getGlobalMinimum(particles)
+	if (!finished(score))
+      } yield Future.traverse(particles)(p => updatePosition(p, minimum))
     }
     
-    nextIteration onSuccess {
-      case _ => swarm(nextIteration)
+    futureParticles onSuccess {
+      case x => swarm(x)
     }
+    
   }
 
   /* generates a particle */
@@ -94,7 +96,7 @@ class Swarm(swarmSize: Int, bounds: Seq[(Double, Double)], enforce: Boolean, var
       // Perform a uniform sample on the bound.
       // Evaluate the parameter set returning both the particle and its fitness.
       // A particle will contain its own gaussian distribution instance.
-      Thread.sleep(10)
+      Thread.sleep(1)
       (List(1.9,1.8), 0.0)
     }
   }
@@ -106,7 +108,7 @@ class Swarm(swarmSize: Int, bounds: Seq[(Double, Double)], enforce: Boolean, var
       // Sample the NonCollapsingGaussian
       // checking that bound constraints are fulfilled.
       // Evalate the parameter set returning both particle and its fitness.
-      Thread.sleep(10)
+      Thread.sleep(1)
       (List(1.0, 2.0, 3.0), 4.0)
     }
   }

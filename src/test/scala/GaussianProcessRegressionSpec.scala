@@ -40,7 +40,12 @@ object TestData extends Outside[GaussianProcessRegression] with Scope {
 }
 
 class GaussianProcessRegressionApproval extends Specification { def is =
-  "Tests that the 'GaussianProcessRegression' implementation can produce the same picture as in the Machine Learning book" ^
+  """
+  Tests that the 'GaussianProcessRegression' implementation can produce a figure similar to [Figure 2.4, pp 18] of the Machine Learning book:
+  C. E. Rasmussen & C. K. I. Williams, Gaussian Processes for Machine Learning, the MIT Press, 2006
+  ISBN 026218253X
+  www.GaussianProcess.org/gpml
+  """ ^
   "The square exponential kernel returns values between 0 and "+(FastMath.pow(TestData.sigma_f, 2)+FastMath.pow(TestData.sigma_n, 2)) ! squaredExponential ^
   "The GaussianProcessRegression can be sampled." ! TestData(sampleVerification) ^
   "The GaussianProcessRegression can make predictions of the first derivative which are similar to the estimated slope via sampling." ! TestData(derivativePredictionVerification) ^
